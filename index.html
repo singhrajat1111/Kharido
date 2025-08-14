@@ -10,6 +10,7 @@
 
   <!-- AOS CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet" />
+  <script src="https://kit.fontawesome.com/6b73c3b34b.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -21,7 +22,8 @@
       </div>
 
       <!-- Hamburger Button -->
-      <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-menu">
+      <button class="hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false"
+        aria-controls="nav-menu">
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
@@ -37,7 +39,8 @@
           <li>
             <a href="cart.html">
               <i class="fa-solid fa-cart-shopping"></i> Cart
-              <span id="cart-count" style="background:#ff00cc;color:#fff;padding:2px 6px;border-radius:8px;">0</span>
+              <span id="cart-count"
+                style="background:#ff00cc;color:#fff;padding:2px 6px;border-radius:8px;">0</span>
             </a>
           </li>
         </ul>
@@ -47,7 +50,8 @@
     <div class="main">
       <div class="column" data-aos="fade-right">
         <h1>Add Some <span>Swag</span> <br /> to Your Life <br /> With <span>Kharido</span></h1>
-        <p>Welcome to Kharido — your one-stop online shop for everything you need. From fashion to electronics, enjoy unbeatable prices & fast delivery.</p>
+        <p>Welcome to Kharido — your one-stop online shop for everything you need. From fashion to electronics, enjoy
+          unbeatable prices & fast delivery.</p>
         <a href="#products-section" class="button">Explore Products</a>
       </div>
       <div class="column" data-aos="fade-left">
@@ -150,8 +154,7 @@
     <p class="copyright">© 2025 Kharido. All Rights Reserved.</p>
   </footer>
 
-  <!-- SCRIPTS -->
-  <script src="https://kit.fontawesome.com/6b73c3b34b.js" crossorigin="anonymous"></script>
+  <!-- JS -->
   <script src="js/kharido.js" defer></script>
 
   <!-- AOS JS -->
@@ -161,7 +164,16 @@
       duration: 1000,
       once: true,
     });
+
+    // Mobile menu toggle
+    const hamburger = document.getElementById('hamburger');
+    const navMenu = document.getElementById('nav-menu');
+
+    hamburger.addEventListener('click', () => {
+      navMenu.classList.toggle('active');
+      const expanded = hamburger.getAttribute('aria-expanded') === 'true';
+      hamburger.setAttribute('aria-expanded', !expanded);
+    });
   </script>
 </body>
-
 </html>
