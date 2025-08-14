@@ -1,0 +1,154 @@
+<<<<<<< HEAD
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kharido - Checkout</title>
+  <link rel="stylesheet" type="text/css" href="specific_cart-checkout.css">
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header data-aos="fade-down" data-aos-duration="800">
+    <div class="navbar">
+      <div class="logo">Kharido</div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="cart.html">Cart</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container" data-aos="fade-up" data-aos-delay="200">
+    <h1 data-aos="zoom-in" data-aos-delay="300">Checkout</h1>
+    <form id="checkout-form" data-aos="fade-up" data-aos-delay="400">
+      <label>
+        Full Name:
+        <input type="text" id="name" required>
+      </label>
+      <label>
+        Email:
+        <input type="email" id="email" required>
+      </label>
+      <label>
+        Address:
+        <textarea id="address" required></textarea>
+      </label>
+      <label>
+        Payment Method:
+        <select id="payment" required>
+          <option value="">Select</option>
+          <option value="cod">Cash on Delivery</option>
+          <option value="card">Credit/Debit Card</option>
+        </select>
+      </label>
+      <button type="submit" class="btn-primary" data-aos="zoom-in" data-aos-delay="500">Place Order</button>
+    </form>
+  </main>
+
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>AOS.init({ once: true, easing: 'ease-out-cubic' });</script>
+  <script src="js/kharido.js" defer></script>
+  <script>
+    document.getElementById("checkout-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const payment = document.getElementById("payment").value;
+
+      if (!name || !email || !address || !payment) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      if (kharidoCart.loadCart().length === 0) {
+        alert("Your cart is empty!");
+        return;
+      }
+
+      alert(`Thank you, ${name}! Your order has been placed.`);
+      kharidoCart.clearCart();
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
+=======
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kharido - Checkout</title>
+  <link rel="stylesheet" href="cart-checkout.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header>
+    <div class="navbar">
+      <div class="logo">Kharido</div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="cart.html">Cart</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <h1>Checkout</h1>
+    <form id="checkout-form">
+      <label>
+        Full Name:
+        <input type="text" id="name" required>
+      </label>
+      <label>
+        Email:
+        <input type="email" id="email" required>
+      </label>
+      <label>
+        Address:
+        <textarea id="address" required></textarea>
+      </label>
+      <label>
+        Payment Method:
+        <select id="payment" required>
+          <option value="">Select</option>
+          <option value="cod">Cash on Delivery</option>
+          <option value="card">Credit/Debit Card</option>
+        </select>
+      </label>
+      <button type="submit" class="btn-primary">Place Order</button>
+    </form>
+  </main>
+
+  <script src="js/kharido.js" defer></script>
+  <script>
+    document.getElementById("checkout-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const payment = document.getElementById("payment").value;
+
+      if (!name || !email || !address || !payment) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      if (kharidoCart.loadCart().length === 0) {
+        alert("Your cart is empty!");
+        return;
+      }
+
+      alert(`Thank you, ${name}! Your order has been placed.`);
+      kharidoCart.clearCart();
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
+>>>>>>> 81595899774a8f6576b3f9a5df042415c52e21df
