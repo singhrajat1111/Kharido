@@ -3,92 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kharido - Cart</title>
+  <title>Your Cart - Kharido</title>
+  <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="cart-checkout.css">
-  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
 </head>
 <body>
-
-  <header data-aos="fade-down" data-aos-duration="800">
+  <header class="header">
     <div class="navbar">
-      <div class="logo">Kharido</div>
-      <nav>
-        <a href="index.html">Home</a>
-        <a href="cart.html">Cart</a>
+      <div class="logo">
+        <h2>Kharido</h2>
+      </div>
+      <button class="hamburger" aria-label="Menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="shop.html">Shop</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="cart.html" class="active">Cart</a></li>
+        </ul>
       </nav>
     </div>
   </header>
-
-  <main class="container" data-aos="fade-up" data-aos-delay="200">
-    <h1 data-aos="zoom-in" data-aos-delay="300">Your Cart</h1>
-    <div id="cart-page-items" data-aos="fade-up" data-aos-delay="400"></div>
-
-    <div class="cart-summary" data-aos="fade-left" data-aos-delay="500">
-      <h3>Cart Summary</h3>
-      <p>Subtotal: <span id="cart-page-subtotal">₹0</span></p>
-      <a href="checkout.html" class="btn-primary" data-aos="zoom-in" data-aos-delay="600">Proceed to Checkout</a>
+  
+  <main class="checkout-container">
+    <h1 class="checkout-title">Your Shopping Cart</h1>
+    <div id="kharido-cart-items" class="kharido-cart-items">
+      <!-- Dynamically populated by JS -->
+    </div>
+    <div class="kharido-cart-footer">
+      <div class="kharido-cart-summary">
+        <div>Subtotal: <strong id="kharido-cart-subtotal">₹0.00</strong></div>
+        <div>Shipping: <strong>₹50.00</strong></div>
+        <div class="order-total">Total: <strong id="kharido-cart-total">₹0.00</strong></div>
+      </div>
+      <div class="kharido-cart-actions">
+        <a href="checkout.html" class="kharido-btn-primary">Proceed to Checkout</a>
+        <button id="clear-cart" class="kharido-btn-secondary">Clear Cart</button>
+      </div>
     </div>
   </main>
-
-  <!-- AOS JS -->
-  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script>
-    AOS.init({ once: true, easing: 'ease-out-cubic' });
-  </script>
-
-  <script src="js/kharido.js" defer></script>
+  
+  <footer class="footer">
+    <div class="footer-container">
+      <h3>Kharido</h3>
+      <p>Your trusted online shopping destination for quality and value.</p>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="shop.html">Shop</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+      <p>Email: support@kharido.com</p>
+      <p>Phone: +91-9876543210</p>
+    </div>
+  </footer>
+  
+  <script src="js/kharido.js"></script>
   <script>
     function renderCartPage() {
-      const container = document.getElementById("cart-page-items");
-      const subtotalEl = document.getElementById("cart-page-subtotal");
-      const cart = kharidoCart.loadCart();
+      const cart = kharidoCart.getCart();
+      const container = document.getElementById("kharido-cart-items");
+      const subtotalEl = document.getElementById("kharido-cart-subtotal");
+      const totalEl = document.getElementById("kharido-cart-total");
 
-      if (cart.length === 0) {
-        container.innerHTML = "<p>Your cart is empty.</p>";
-        subtotalEl.textContent = "₹0";
+      if (!cart.length) {
+        container.innerHTML = `
+          <div class="kharido-empty">
+            <img src="Assets/empty-cart.svg" alt="Empty cart" style="max-width:180px;margin-bottom:16px;">
+            <h3>Your cart is empty</h3>
+            <a href="index.html" class="kharido-btn-primary" style="max-width:200px;">Continue Shopping</a>
+          </div>
+        `;
+        subtotalEl.textContent = kharidoCart.formatCurrency(0);
+        totalEl.textContent = kharidoCart.formatCurrency(0);
         return;
       }
 
-      container.innerHTML = "";
-      cart.forEach((item, index) => {
-        const row = document.createElement("div");
-        row.className = "cart-item-row";
-        row.setAttribute("data-aos", "fade-up");
-        row.setAttribute("data-aos-delay", `${index * 150 + 400}`);
-        row.innerHTML = `
-          <img src="${item.img}" alt="${item.name}" class="cart-thumb">
-          <div class="cart-item-info">
-            <h4>${item.name}</h4>
-            <p>₹${item.price}</p>
-            <div class="qty-controls">
-              <button onclick="updateQty('${item.id}', ${item.quantity - 1})">-</button>
-              <input type="number" value="${item.quantity}" min="1" onchange="updateQty('${item.id}', this.value)">
-              <button onclick="updateQty('${item.id}', ${item.quantity + 1})">+</button>
-              <button onclick="removeItem('${item.id}')">Remove</button>
+      container.innerHTML = cart.map(item => `
+        <div class="kharido-cart-row" data-id="${item.id}">
+          <img class="kharido-cart-thumb" src="${item.img}" alt="${item.name}" />
+          <div class="kharido-cart-meta">
+            <div class="kharido-cart-name">${item.name}</div>
+            <div class="kharido-cart-price">${kharidoCart.formatCurrency(item.price)}</div>
+            <div class="kharido-qty-row">
+              <button class="kharido-qty-decr" aria-label="Decrease quantity">−</button>
+              <input class="kharido-qty-input" type="number" min="1" value="${item.quantity}" aria-label="Quantity for ${item.name}" />
+              <button class="kharido-qty-incr" aria-label="Increase quantity">+</button>
+              <button class="kharido-remove-item" aria-label="Remove ${item.name} from cart">Remove</button>
             </div>
           </div>
-        `;
-        container.appendChild(row);
+        </div>
+      `).join("");
+
+      const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      subtotalEl.textContent = kharidoCart.formatCurrency(subtotal);
+      totalEl.textContent = kharidoCart.formatCurrency(subtotal + 50); // Adding shipping cost
+
+      // Quantity change + remove
+      container.querySelectorAll(".kharido-qty-decr, .kharido-qty-incr, .kharido-remove-item").forEach(btn => {
+        btn.addEventListener("click", function(e) {
+          const row = e.target.closest(".kharido-cart-row");
+          const id = row.dataset.id;
+          const input = row.querySelector(".kharido-qty-input");
+          let cart = kharidoCart.getCart();
+          let item = cart.find(i => i.id === id);
+          if (!item) return;
+          if (e.target.classList.contains("kharido-qty-decr") && item.quantity > 1) {
+            item.quantity -= 1;
+          } else if (e.target.classList.contains("kharido-qty-incr")) {
+            item.quantity += 1;
+          } else if (e.target.classList.contains("kharido-remove-item")) {
+            cart = cart.filter(i => i.id !== id);
+          }
+          kharidoCart.updateCart(cart);
+          renderCartPage();
+        });
       });
-
-      const total = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
-      subtotalEl.textContent = `₹${total}`;
-    }
-
-    function updateQty(id, qty) {
-      qty = parseInt(qty) || 1;
-      kharidoCart.loadCart().forEach(item => {
-        if (item.id === id) item.quantity = Math.max(1, qty);
+      container.querySelectorAll(".kharido-qty-input").forEach(input => {
+        input.addEventListener("change", function(e) {
+          const row = input.closest(".kharido-cart-row");
+          const id = row.dataset.id;
+          let cart = kharidoCart.getCart();
+          let item = cart.find(i => i.id === id);
+          if (!item) return;
+          item.quantity = Math.max(1, parseInt(input.value) || 1);
+          kharidoCart.updateCart(cart);
+          renderCartPage();
+        });
       });
-      kharidoCart.saveCart(kharidoCart.loadCart());
-      renderCartPage();
     }
-
-    function removeItem(id) {
-      kharidoCart.saveCart(kharidoCart.loadCart().filter(i => i.id !== id));
+    document.getElementById("clear-cart").addEventListener("click", () => {
+      kharidoCart.clearCart();
       renderCartPage();
-    }
-
+    });
     document.addEventListener("DOMContentLoaded", renderCartPage);
   </script>
 </body>
