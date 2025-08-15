@@ -81,9 +81,118 @@
       // Handle form submission logic here
       alert("Thank you for your purchase!");
       // Optionally clear the cart or redirect to a confirmation page
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kharido - Checkout</title>
+  <link rel="stylesheet" href="cart-checkout.css" />
+  <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header data-aos="fade-down" data-aos-duration="800">
+    <div class="navbar">
+      <div class="logo">Kharido</div>
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="cart.html">Cart</a>
+        <a href="checkout.html" class="active">Checkout</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CHECKOUT SECTION -->
+  <main class="container" data-aos="fade-up" data-aos-delay="200">
+    <h1 data-aos="zoom-in" data-aos-delay="300">Checkout</h1>
+
+    <div class="checkout-grid">
+      <!-- Checkout Form -->
+      <form id="checkout-form" class="checkout-form" data-aos="fade-right" data-aos-delay="400">
+        <h3>Billing Details</h3>
+        <label>Full Name</label>
+        <input type="text" name="name" required>
+
+        <label>Email Address</label>
+        <input type="email" name="email" required>
+
+        <label>Address</label>
+        <textarea name="address" rows="3" required></textarea>
+
+        <label>Payment Method</label>
+        <select name="payment" required>
+          <option value="cod">Cash on Delivery</option>
+          <option value="card">Credit/Debit Card</option>
+          <option value="upi">UPI</option>
+        </select>
+
+        <button type="submit" class="btn-primary" data-aos="zoom-in" data-aos-delay="500">
+          Place Order
+        </button>
+      </form>
+
+      <!-- Order Summary -->
+      <div class="order-summary" data-aos="fade-left" data-aos-delay="500">
+        <h3>Your Order</h3>
+        <div id="checkout-items"></div>
+        <p>Subtotal: <span id="checkout-subtotal">₹0</span></p>
+        <p>Shipping: <span>₹50</span></p>
+        <h4>Total: <span id="checkout-total">₹0</span></h4>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer" data-aos="fade-up">
+    <p>© 2025 Kharido. All Rights Reserved.</p>
+  </footer>
+
+  <!-- AOS JS -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init({ once: true, easing: 'ease-out-cubic' });
+  </script>
+
+  <!-- Cart Logic -->
+  <script src="js/kharido.js"></script>
+  <script>
+    function renderCheckoutPage() {
+      const itemsContainer = document.getElementById("checkout-items");
+      const subtotalEl = document.getElementById("checkout-subtotal");
+      const totalEl = document.getElementById("checkout-total");
+      const cart = kharidoCart.loadCart();
+
+      if (cart.length === 0) {
+        itemsContainer.innerHTML = "<p>Your cart is empty.</p>";
+        subtotalEl.textContent = "₹0";
+        totalEl.textContent = "₹0";
+        return;
+      }
+
+      itemsContainer.innerHTML = "";
+      let subtotal = 0;
+      cart.forEach(item => {
+        subtotal += item.price * item.quantity;
+        itemsContainer.innerHTML += `
+          <div class="order-item">
+            <span>${item.name} × ${item.quantity}</span>
+            <span>₹${item.price * item.quantity}</span>
+          </div>
+        `;
+      });
+
+      subtotalEl.textContent = `₹${subtotal}`;
+      totalEl.textContent = `₹${subtotal + 50}`;
+    }
+
+    document.getElementById("checkout-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      alert("Order placed successfully!");
       kharidoCart.clearCart();
       window.location.href = "index.html"; // Redirect to home page after purchase
     });
+
+    document.addEventListener("DOMContentLoaded", renderCheckoutPage);
   </script>
+
 </body>
 </html>

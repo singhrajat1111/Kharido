@@ -17,6 +17,15 @@
     '"': "&quot;",
     "'": "&#39;"
   }[m]));
+  const parsePrice = (text) => parseFloat((text || "").replace(/[^0-9.]/g, "")) || 0;
+  
+  const formatCurrency = (n) => new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR'
+  }).format(n);
+
+  const escapeHtml = (s) => (s + "").replace(/[&<>"']/g, m => 
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 
   // Cart management
   const loadCart = () => {
@@ -24,6 +33,7 @@
       return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     } catch (error) {
       console.error("Failed to load cart:", error);
+    } catch {
       return [];
     }
   };
@@ -32,6 +42,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
     updateCartCountUI(cart);
     if (window.location.pathname.includes('cart.html')) renderCartModal?.();
+    if (window.location.pathname.includes('cart.html')) renderCartPage();
   };
 
   const addToCart = (product) => {
@@ -42,10 +53,17 @@
     } else {
       cart.push({
         ...product,
+    
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cart.push({ 
+        ...product, 
         quantity: 1,
         addedAt: new Date().toISOString()
       });
     }
+    
     saveCart(cart);
     if (product.imgEl) flyToCartAnimation(product.imgEl);
   };
@@ -65,6 +83,7 @@
       return;
     }
     item.quantity = quantity;
+    item.quantity = Math.max(1, quantity);
     saveCart(cart);
     renderCartModal();
   };
@@ -86,18 +105,21 @@
     `;
     navbar.appendChild(wrapper);
     document.getElementById("kharido-cart-btn").addEventListener("click", () => toggleCartModal(true));
+    
+    navbar.appendChild(wrapper);
+    document.getElementById("kharido-cart-btn").addEventListener("click", toggleCartModal);
   };
 
   const updateCartCountUI = (cart) => {
     const countEl = document.getElementById("kharido-cart-count");
     if (!countEl) return;
-
     const count = cart.reduce((total, item) => total + item.quantity, 0);
     countEl.textContent = count;
 
     // Animation
     countEl.classList.remove("kharido-pulse");
     void countEl.offsetWidth; // Trigger reflow
+    void countEl.offsetWidth;
     countEl.classList.add("kharido-pulse");
   };
 
@@ -127,6 +149,8 @@
     requestAnimationFrame(() => {
       const dx = cartRect.left - imgRect.left + cartRect.width / 2 - imgRect.width / 2;
       const dy = cartRect.top - imgRect.top + cartRect.height / 2 - imgRect.height / 2;
+      const dx = cartRect.left - imgRect.left + cartRect.width/2 - imgRect.width/2;
+      const dy = cartRect.top - imgRect.top + cartRect.height/2 - imgRect.height/2;
       clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
       clone.style.opacity = "0.5";
     });
@@ -164,6 +188,7 @@
     document.body.appendChild(modal);
 
     // Event listeners (once)
+    // Event listeners
     document.getElementById("kharido-cart-close").addEventListener("click", () => toggleCartModal(false));
     document.getElementById("kharido-cart-backdrop").addEventListener("click", () => toggleCartModal(false));
     document.getElementById("kharido-clear-cart").addEventListener("click", clearCart);
@@ -182,6 +207,9 @@
   }
 
   let itemsElListenerAttached = false;
+    renderCartModal();
+  };
+
   const renderCartModal = () => {
     const itemsEl = document.getElementById("kharido-cart-items");
     const subtotalEl = document.getElementById("kharido-cart-subtotal");
@@ -189,6 +217,7 @@
 
     const cart = loadCart();
     itemsEl.innerHTML = cart.length === 0
+    itemsEl.innerHTML = cart.length === 0 
       ? `<div class="kharido-empty">Your cart is empty. Add some items!</div>`
       : cart.map(item => `
           <div class="kharido-cart-row" data-id="${item.id}">
@@ -198,10 +227,17 @@
               <div class="kharido-cart-price">${formatCurrency(item.price)}</div>
               <div class="kharido-qty-row">
                 <button class="kharido-qty-decr" data-id="${item.id}" aria-label="Decrease quantity">−</button>
+<<<<<<< HEAD
                 <input class="kharido-qty-input" data-id="${item.id}" type="number" min="1" value="${item.quantity}"
                   aria-label="Quantity for ${escapeHtml(item.name)}" />
                 <button class="kharido-qty-incr" data-id="${item.id}" aria-label="Increase quantity">+</button>
                 <button class="kharido-remove-item" data-id="${item.id}"
+=======
+                <input class="kharido-qty-input" data-id="${item.id}" type="number" min="1" value="${item.quantity}" 
+                  aria-label="Quantity for ${escapeHtml(item.name)}" />
+                <button class="kharido-qty-incr" data-id="${item.id}" aria-label="Increase quantity">+</button>
+                <button class="kharido-remove-item" data-id="${item.id}" 
+>>>>>>> 5c009987b214a8ff49ca466b0a3f0cf49443cbdd
                   aria-label="Remove ${escapeHtml(item.name)} from cart">Remove</button>
               </div>
             </div>
@@ -238,6 +274,29 @@
     }
   };
 
+    subtotalEl.textContent = formatCurrency(calculateTotal(cart));
+
+    // Event delegation for dynamic elements
+    itemsEl.addEventListener("click", (e) => {
+      const target = e.target;
+      const id = target.closest("[data-id]")?.dataset.id;
+      if (!id) return;
+
+      if (target.classList.contains("kharido-qty-decr")) {
+        updateQuantity(id, loadCart().find(item => item.id === id).quantity - 1);
+      } else if (target.classList.contains("kharido-qty-incr")) {
+        updateQuantity(id, loadCart().find(item => item.id === id).quantity + 1);
+      } else if (target.classList.contains("kharido-remove-item")) {
+        removeFromCart(id);
+      }
+    });
+
+    itemsEl.addEventListener("change", (e) => {
+      if (e.target.classList.contains("kharido-qty-input")) {
+        updateQuantity(e.target.dataset.id, Math.max(1, parseInt(e.target.value) || 1));
+      }
+    });
+  };
   const toggleCartModal = (show) => {
     const modal = document.getElementById("kharido-cart-modal");
     const cartBtn = document.getElementById("kharido-cart-btn");
@@ -292,6 +351,13 @@
       const pid = btoa(unescape(encodeURIComponent(name + price + idx)));
 
       el.dataset.kharidoId = pid;
+      const priceEl = Array.from(el.querySelectorAll("p")).find(p => /[\d]+(?:[.,]\d{1,2})?/.test(p.textContent));
+      const price = parsePrice(priceEl?.textContent);
+      
+      const imgEl = el.querySelector("img");
+      const pid = `p-${Date.now() % 100000 + idx}`;
+      
+      el.dataset.kharidoId = pid;
 
       const btn = document.createElement("button");
       btn.className = "kharido-add-btn";
@@ -300,7 +366,6 @@
       btn.addEventListener("click", () => {
         addToCart({ id: pid, name, price, img: imgEl?.src || "", imgEl });
       });
-
       el.appendChild(btn);
     });
   };

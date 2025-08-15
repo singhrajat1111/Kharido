@@ -27,6 +27,13 @@ body {
   display: block;   /* Removes extra bottom gap */
 }
 
+.header_image {
+  max-width: 100%;  /* Don't go beyond container width */
+  height: auto;     /* Maintain aspect ratio */
+  display: block;   /* Removes extra bottom gap */
+}
+
+
 /* ===== NAVBAR ===== */
 .navbar {
   display: flex;
@@ -70,6 +77,7 @@ body {
   text-transform: uppercase;
   border-radius: 8px;
   font-size: clamp(14px, 1.1vw, 16px);
+  font-size: 16px;
   display: block;
 }
 
@@ -130,6 +138,66 @@ body {
   text-align: center;
 }
 
+/* Cart count badge */
+.cart-count-badge {
+  background: #ff00cc;
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+  margin-left: 5px;
+  vertical-align: middle;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ===== RESPONSIVE ===== */
+@media screen and (max-width: 900px) {
+  .hamburger {
+    display: flex;
+  }
+
+  .nav-menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: linear-gradient(135deg, #0066ff, #00ffcc);
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 20px 40px;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 999;
+  }
+
+  .nav-menu.active {
+    right: 0;
+  }
+
+  .nav-menu ul {
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+  }
+
+  .nav-menu ul li {
+    width: 100%;
+  }
+
+  .nav-menu ul li a {
+    padding: 12px 20px;
+    text-align: center;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-menu ul li a:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
 /* ===== MAIN SECTION ===== */
 .main {
   display: flex;
@@ -154,6 +222,7 @@ body {
 
 .column h1 {
   font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
   line-height: 1.2;
   margin-bottom: 20px;
   background: linear-gradient(90deg, #ff00cc, #0066ff);
@@ -205,6 +274,7 @@ body {
 
 .products h2 {
   font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-size: 2.5rem;
   color: #fff;
   margin-bottom: 40px;
   position: relative;
@@ -226,12 +296,17 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
 }
 
 .products .product {
   background: linear-gradient(145deg, #1f1f2e, #292942);
   border-radius: 12px;
   padding: 20px;
+  width: 280px;
   text-align: center;
   transition: all 0.3s ease;
 }
@@ -247,11 +322,13 @@ body {
   border-radius: 8px;
   border: 2px solid #00ffcc;
   margin-bottom: 15px;
+  aspect-ratio: 1/1;
   object-fit: cover;
 }
 
 .products .product h4 {
   font-size: clamp(1rem, 1.2vw, 1.2rem);
+  font-size: 1.2rem;
   margin-bottom: 10px;
   color: #fff;
 }
@@ -260,6 +337,7 @@ body {
   color: #00ffcc;
   font-weight: 600;
   font-size: clamp(1rem, 1.1vw, 1.1rem);
+  font-size: 1.1rem;
   margin-bottom: 15px;
 }
 
@@ -274,6 +352,7 @@ body {
   border-radius: 15px;
   cursor: pointer;
   font-size: clamp(0.9rem, 1vw, 1rem);
+  font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
@@ -351,6 +430,11 @@ body {
 
 .offer .offer_details h1 {
   font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-size: 1.1rem;
+}
+
+.offer .offer_details h1 {
+  font-size: 2.5rem;
   margin-bottom: 15px;
   background: linear-gradient(90deg, #ff00cc, #0066ff);
   -webkit-background-clip: text;
@@ -374,6 +458,7 @@ body {
 
 .reviews h2 {
   font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-size: 2.5rem;
   color: #fff;
   margin-bottom: 40px;
   position: relative;
@@ -395,6 +480,10 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
 }
 
 .reviews .review {
@@ -403,6 +492,7 @@ body {
   padding: 25px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
+  width: 320px;
   text-align: left;
   position: relative;
 }
@@ -598,6 +688,18 @@ hr {
     text-align: center;
   }
 
+/* RESPONSIVE ENHANCEMENTS */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 15px;
+  }
+
+  .main {
+    padding: 60px 20px;
+    flex-direction: column;
+    text-align: center;
+  }
+
   .offer .container {
     flex-direction: column;
     text-align: center;
@@ -638,5 +740,27 @@ hr {
 
   .column h1 {
     font-size: 1.6rem;
+  }
+}
+  body {
+    font-size: 15px;
+  }
+
+  .navbar .logo h2 {
+    font-size: 24px;
+  }
+
+  .column h1 {
+    font-size: 2rem;
+  }
+
+  .button, .kharido-add-btn {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+
+  .products .product, .reviews .review {
+    width: 100%;
+    max-width: 350px;
   }
 }
