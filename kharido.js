@@ -1,155 +1,140 @@
 (() => {
-  const STORAGE_KEY = "kharido_cart_v1";
+  const STORAGE_KEY = "kharido_cart_v2";
+  const CART_ANIMATION_DURATION = 700;
 
   // Utility functions
-  function parsePrice(text) {
-    if (!text) return 0;
-    const num = text.replace(/[^0-9.]/g, "");
-    return parseFloat(num) || 0;
-  }
+  const parsePrice = (text) => parseFloat((text || "").replace(/[^0-9.,]/g, "").replace(/,/g, "")) || 0;
 
-  function formatCurrency(n) {
-    return `$${Number(n).toFixed(2)}`;
-  }
+  const formatCurrency = (n) => new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR'
+  }).format(n);
 
-  function escapeHtml(s) {
-    return (s + "").replace(/[&<>"']/g, (m) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])
-    );
-  }
+  const escapeHtml = (s) => (s + "").replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[m]));
 
   // Cart management
-  function loadCart() {
+  const loadCart = () => {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    } catch (e) {
+    } catch (error) {
+      console.error("Failed to load cart:", error);
       return [];
     }
-  }
+  };
 
-  function saveCart(cart) {
+  const saveCart = (cart) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
     updateCartCountUI(cart);
-  }
+    if (window.location.pathname.includes('cart.html')) renderCartModal?.();
+  };
 
-  function addToCart(product) {
+  const addToCart = (product) => {
     const cart = loadCart();
-    const found = cart.find((i) => i.id === product.id);
-    if (found) {
-      found.quantity += 1;
+    const existingItem = cart.find(item => item.id === product.id);
+    if (existingItem) {
+      existingItem.quantity += 1;
     } else {
-      cart.push({ ...product, quantity: 1 });
+      cart.push({
+        ...product,
+        quantity: 1,
+        addedAt: new Date().toISOString()
+      });
     }
     saveCart(cart);
-  }
+    if (product.imgEl) flyToCartAnimation(product.imgEl);
+  };
 
-  function removeFromCart(id) {
-    let cart = loadCart();
-    cart = cart.filter((i) => i.id !== id);
+  const removeFromCart = (id) => {
+    const cart = loadCart().filter(item => item.id !== id);
     saveCart(cart);
     renderCartModal();
-  }
+  };
 
-  function changeQuantity(id, qty) {
+  const updateQuantity = (id, quantity) => {
     const cart = loadCart();
-    const item = cart.find((i) => i.id === id);
+    const item = cart.find(item => item.id === id);
     if (!item) return;
-    item.quantity = Math.max(1, qty);
+    if (quantity < 1) {
+      removeFromCart(id);
+      return;
+    }
+    item.quantity = quantity;
     saveCart(cart);
     renderCartModal();
-  }
+  };
 
-  function cartTotal(cart) {
-    return cart.reduce((s, it) => s + it.price * it.quantity, 0);
-  }
+  const calculateTotal = (cart) => cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
-  // UI: Cart Icon in navbar
-  function createCartIcon() {
+  // UI Functions
+  const createCartIcon = () => {
     const navbar = document.querySelector(".navbar");
-    if (!navbar) return;
-
-    // Prevent duplicate icon insertion
-    if(document.querySelector(".kharido-cart-wrapper")) return;
+    if (!navbar || document.querySelector(".kharido-cart-wrapper")) return;
 
     const wrapper = document.createElement("div");
     wrapper.className = "kharido-cart-wrapper";
     wrapper.innerHTML = `
-      <button id="kharido-cart-btn" aria-label="Open cart" aria-expanded="false" aria-controls="kharido-cart-modal">
-        <span id="kharido-cart-icon" aria-hidden="true">🛒</span>
+      <button id="kharido-cart-btn" aria-label="Cart" aria-expanded="false">
+        <span id="kharido-cart-icon">🛒</span>
         <span id="kharido-cart-count" aria-live="polite">0</span>
       </button>
     `;
-    wrapper.style.display = "flex";
-    wrapper.style.alignItems = "center";
-    wrapper.style.marginLeft = "12px";
-
     navbar.appendChild(wrapper);
+    document.getElementById("kharido-cart-btn").addEventListener("click", () => toggleCartModal(true));
+  };
 
-    const cartBtn = document.getElementById("kharido-cart-btn");
-    cartBtn.addEventListener("click", () => {
-      const expanded = cartBtn.getAttribute("aria-expanded") === "true";
-      toggleCartModal(!expanded);
-      cartBtn.setAttribute("aria-expanded", String(!expanded));
-    });
-
-    updateCartCountUI(loadCart());
-  }
-
-  function updateCartCountUI(cartOrArray) {
+  const updateCartCountUI = (cart) => {
     const countEl = document.getElementById("kharido-cart-count");
     if (!countEl) return;
-    // Accept either array or cart object
-    const cart = Array.isArray(cartOrArray) ? cartOrArray : loadCart();
-    const count = cart.reduce((s, i) => s + i.quantity, 0);
+
+    const count = cart.reduce((total, item) => total + item.quantity, 0);
     countEl.textContent = count;
 
-    // Animation pulse effect
+    // Animation
     countEl.classList.remove("kharido-pulse");
-    void countEl.offsetWidth; // trigger reflow for animation
+    void countEl.offsetWidth; // Trigger reflow
     countEl.classList.add("kharido-pulse");
-  }
+  };
 
- // Enhance existing product elements with add-to-cart buttons if missing
-function enhanceExistingProducts() {
-  const productEls = document.querySelectorAll(".products .product");
-  let nextId = Date.now() % 100000;
+  const flyToCartAnimation = (imgEl) => {
+    const cartIcon = document.getElementById("kharido-cart-icon");
+    if (!imgEl || !cartIcon) return;
 
-  productEls.forEach((el, idx) => {
-    const nameEl = el.querySelector("h4, h3, p");
-    const name = nameEl ? nameEl.textContent.trim() : `Product ${idx + 1}`;
+    const imgRect = imgEl.getBoundingClientRect();
+    const cartRect = cartIcon.getBoundingClientRect();
+    const clone = imgEl.cloneNode(true);
 
-    let price = 0;
-    const priceCandidate = Array.from(el.querySelectorAll("p")).find((p) =>
-      /[\d]+(?:[.,]\d{1,2})?/.test(p.textContent)
-    );
-    if (priceCandidate) price = parsePrice(priceCandidate.textContent);
+    Object.assign(clone.style, {
+      position: "fixed",
+      left: `${imgRect.left}px`,
+      top: `${imgRect.top}px`,
+      width: `${imgRect.width}px`,
+      height: `${imgRect.height}px`,
+      transition: `all ${CART_ANIMATION_DURATION}ms cubic-bezier(.4,.8,.2,1)`,
+      zIndex: 9999,
+      pointerEvents: "none",
+      borderRadius: "8px",
+      objectFit: "cover"
+    });
 
-    const imgEl = el.querySelector("img");
-    const imgSrc = imgEl ? imgEl.getAttribute("src") : "";
+    document.body.appendChild(clone);
 
-    const pid = `p-${nextId + idx}`;
-    el.dataset.kharidoId = pid;
+    requestAnimationFrame(() => {
+      const dx = cartRect.left - imgRect.left + cartRect.width / 2 - imgRect.width / 2;
+      const dy = cartRect.top - imgRect.top + cartRect.height / 2 - imgRect.height / 2;
+      clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
+      clone.style.opacity = "0.5";
+    });
 
-    // Check if product already has an "Add to Cart" button
-    if (!el.querySelector(".kharido-add-btn") && !el.querySelector(".add-to-cart")) {
-      const btn = document.createElement("button");
-      btn.className = "kharido-add-btn";
-      btn.type = "button";
-      btn.innerHTML = `Add to Cart`;
-      btn.style.cursor = "pointer";
-      btn.style.marginTop = "8px";
-      btn.addEventListener("click", () => {
-        if (imgEl) flyToCartAnimation(imgEl);
-        addToCart({ id: pid, name, price, img: imgSrc });
-      });
-      el.appendChild(btn);
-    }
-  });
-}
+    setTimeout(() => clone.remove(), CART_ANIMATION_DURATION);
+  };
 
-
-  // Cart Modal creation and rendering
-  function createCartModal() {
+  const createCartModal = () => {
     if (document.getElementById("kharido-cart-modal")) return;
 
     const modal = document.createElement("div");
@@ -167,7 +152,7 @@ function enhanceExistingProducts() {
         <div id="kharido-cart-items" class="kharido-cart-items" tabindex="0"></div>
         <footer class="kharido-cart-footer">
           <div class="kharido-cart-summary">
-            <div>Subtotal: <strong id="kharido-cart-subtotal">$0.00</strong></div>
+            <div>Subtotal: <strong id="kharido-cart-subtotal">₹0.00</strong></div>
           </div>
           <div class="kharido-cart-actions">
             <button id="kharido-clear-cart" class="kharido-btn-secondary">Clear Cart</button>
@@ -178,221 +163,182 @@ function enhanceExistingProducts() {
     `;
     document.body.appendChild(modal);
 
-    // Close handlers
+    // Event listeners (once)
     document.getElementById("kharido-cart-close").addEventListener("click", () => toggleCartModal(false));
     document.getElementById("kharido-cart-backdrop").addEventListener("click", () => toggleCartModal(false));
-
-    // Clear cart
-    document.getElementById("kharido-clear-cart").addEventListener("click", () => {
-      localStorage.removeItem(STORAGE_KEY);
-      updateCartCountUI([]);
-      renderCartModal();
-    });
-
-    // Checkout (demo)
-    document.getElementById("kharido-checkout").addEventListener("click", () => {
-      const cart = loadCart();
-      if (cart.length === 0) {
-        alert("Your cart is empty.");
-        return;
-      }
-      alert("Checkout - this is a demo. Cart will be cleared.");
-      localStorage.removeItem(STORAGE_KEY);
-      updateCartCountUI([]);
-      renderCartModal();
-      toggleCartModal(false);
-    });
+    document.getElementById("kharido-clear-cart").addEventListener("click", clearCart);
+    document.getElementById("kharido-checkout").addEventListener("click", handleCheckout);
+    document.addEventListener("keydown", modalKeyHandler);
 
     renderCartModal();
+  };
+
+  function modalKeyHandler(e) {
+    const modal = document.getElementById("kharido-cart-modal");
+    if (!modal || modal.getAttribute("aria-hidden") === "true") return;
+    if (e.key === "Escape") {
+      toggleCartModal(false);
+    }
   }
 
-  // Render cart modal contents
-  function renderCartModal() {
+  let itemsElListenerAttached = false;
+  const renderCartModal = () => {
     const itemsEl = document.getElementById("kharido-cart-items");
     const subtotalEl = document.getElementById("kharido-cart-subtotal");
     if (!itemsEl || !subtotalEl) return;
 
     const cart = loadCart();
-    itemsEl.innerHTML = "";
-
-    if (cart.length === 0) {
-      itemsEl.innerHTML = `<div class="kharido-empty">Your cart is empty. Add some items!</div>`;
-      subtotalEl.textContent = formatCurrency(0);
-      return;
-    }
-
-    cart.forEach((it) => {
-      const row = document.createElement("div");
-      row.className = "kharido-cart-row";
-      row.innerHTML = `
-        <img class="kharido-cart-thumb" src="${it.img}" alt="${escapeHtml(it.name)}" />
-        <div class="kharido-cart-meta">
-          <div class="kharido-cart-name">${escapeHtml(it.name)}</div>
-          <div class="kharido-cart-price">${formatCurrency(it.price)}</div>
-          <div class="kharido-qty-row">
-            <button class="kharido-qty-decr" data-id="${it.id}" aria-label="Decrease quantity">−</button>
-            <input class="kharido-qty-input" data-id="${it.id}" type="number" min="1" value="${it.quantity}" aria-label="Quantity for ${escapeHtml(it.name)}" />
-            <button class="kharido-qty-incr" data-id="${it.id}" aria-label="Increase quantity">+</button>
-            <button class="kharido-remove-item" data-id="${it.id}" aria-label="Remove ${escapeHtml(it.name)} from cart">Remove</button>
+    itemsEl.innerHTML = cart.length === 0
+      ? `<div class="kharido-empty">Your cart is empty. Add some items!</div>`
+      : cart.map(item => `
+          <div class="kharido-cart-row" data-id="${item.id}">
+            <img class="kharido-cart-thumb" src="${item.img}" alt="${escapeHtml(item.name)}" />
+            <div class="kharido-cart-meta">
+              <div class="kharido-cart-name">${escapeHtml(item.name)}</div>
+              <div class="kharido-cart-price">${formatCurrency(item.price)}</div>
+              <div class="kharido-qty-row">
+                <button class="kharido-qty-decr" data-id="${item.id}" aria-label="Decrease quantity">−</button>
+                <input class="kharido-qty-input" data-id="${item.id}" type="number" min="1" value="${item.quantity}"
+                  aria-label="Quantity for ${escapeHtml(item.name)}" />
+                <button class="kharido-qty-incr" data-id="${item.id}" aria-label="Increase quantity">+</button>
+                <button class="kharido-remove-item" data-id="${item.id}"
+                  aria-label="Remove ${escapeHtml(item.name)} from cart">Remove</button>
+              </div>
+            </div>
           </div>
-        </div>
-      `;
-      itemsEl.appendChild(row);
-    });
+        `).join("");
 
-    subtotalEl.textContent = formatCurrency(cartTotal(cart));
+    subtotalEl.textContent = formatCurrency(calculateTotal(cart));
 
-    // Remove previous listeners to avoid duplicates
-    const qtyDecrBtns = itemsEl.querySelectorAll(".kharido-qty-decr");
-    const qtyIncrBtns = itemsEl.querySelectorAll(".kharido-qty-incr");
-    const qtyInputs = itemsEl.querySelectorAll(".kharido-qty-input");
-    const removeBtns = itemsEl.querySelectorAll(".kharido-remove-item");
+    // Attach event listeners only once!
+    if (!itemsElListenerAttached) {
+      itemsEl.addEventListener("click", (e) => {
+        const target = e.target;
+        const id = target.closest("[data-id]")?.dataset.id;
+        if (!id) return;
+        const cartItem = loadCart().find(item => item.id === id);
+        if (!cartItem) return;
 
-    qtyDecrBtns.forEach((btn) =>
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.id;
-        const cart = loadCart();
-        const it = cart.find((x) => x.id === id);
-        if (!it) return;
-        changeQuantity(id, Math.max(1, it.quantity - 1));
-      })
-    );
+        if (target.classList.contains("kharido-qty-decr")) {
+          updateQuantity(id, cartItem.quantity - 1);
+        } else if (target.classList.contains("kharido-qty-incr")) {
+          updateQuantity(id, cartItem.quantity + 1);
+        } else if (target.classList.contains("kharido-remove-item")) {
+          removeFromCart(id);
+        }
+      });
 
-    qtyIncrBtns.forEach((btn) =>
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.id;
-        const cart = loadCart();
-        const it = cart.find((x) => x.id === id);
-        if (!it) return;
-        changeQuantity(id, it.quantity + 1);
-      })
-    );
+      itemsEl.addEventListener("change", (e) => {
+        if (e.target.classList.contains("kharido-qty-input")) {
+          updateQuantity(e.target.dataset.id, Math.max(0, parseInt(e.target.value) || 0));
+        }
+      });
 
-    qtyInputs.forEach((input) =>
-      input.addEventListener("change", () => {
-        const id = input.dataset.id;
-        const val = parseInt(input.value) || 1;
-        changeQuantity(id, val);
-      })
-    );
+      itemsElListenerAttached = true;
+    }
+  };
 
-    removeBtns.forEach((btn) =>
-      btn.addEventListener("click", () => removeFromCart(btn.dataset.id))
-    );
-  }
-
-  // Show or hide cart modal
-  function toggleCartModal(show) {
+  const toggleCartModal = (show) => {
     const modal = document.getElementById("kharido-cart-modal");
     const cartBtn = document.getElementById("kharido-cart-btn");
     if (!modal) return;
+
     if (show) {
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
-      renderCartModal();
       document.body.style.overflow = "hidden";
-      if(cartBtn) cartBtn.setAttribute("aria-expanded", "true");
+      cartBtn?.setAttribute("aria-expanded", "true");
+      renderCartModal();
+      // Accessibility: Focus on modal
+      setTimeout(() => {
+        document.getElementById("kharido-cart-header")?.focus();
+      }, 0);
     } else {
       modal.classList.remove("open");
       modal.setAttribute("aria-hidden", "true");
       document.body.style.overflow = "";
-      if(cartBtn) cartBtn.setAttribute("aria-expanded", "false");
+      cartBtn?.setAttribute("aria-expanded", "false");
     }
-  }
+  };
 
-  // Fly-to-cart animation on add
-  function flyToCartAnimation(imgEl) {
-    const cartIcon = document.getElementById("kharido-cart-icon");
-    if (!imgEl || !cartIcon) return;
+  const handleCheckout = () => {
+    const cart = loadCart();
+    if (cart.length === 0) {
+      alert("Your cart is empty.");
+      return;
+    }
+    alert("Checkout - this is a demo. Cart will be cleared.");
+    clearCart();
+    toggleCartModal(false);
+  };
 
-    const imgRect = imgEl.getBoundingClientRect();
-    const cartRect = cartIcon.getBoundingClientRect();
+  const clearCart = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    updateCartCountUI([]);
+    renderCartModal();
+  };
 
-    const clone = imgEl.cloneNode(true);
-    clone.style.position = "fixed";
-    clone.style.left = `${imgRect.left}px`;
-    clone.style.top = `${imgRect.top}px`;
-    clone.style.width = `${imgRect.width}px`;
-    clone.style.height = `${imgRect.height}px`;
-    clone.style.transition = "transform 700ms cubic-bezier(.2,.8,.2,1), opacity 700ms";
-    clone.style.zIndex = "9999";
-    clone.style.pointerEvents = "none";
-    clone.style.borderRadius = "8px";
-    document.body.appendChild(clone);
+  const enhanceExistingProducts = () => {
+    document.querySelectorAll(".products .product").forEach((el, idx) => {
+      if (el.querySelector(".kharido-add-btn")) return;
 
-    const dx = cartRect.left + cartRect.width / 2 - (imgRect.left + imgRect.width / 2);
-    const dy = cartRect.top + cartRect.height / 2 - (imgRect.top + imgRect.height / 2);
+      const nameEl = el.querySelector("h4, h3, p");
+      const name = nameEl?.textContent.trim() || `Product ${idx + 1}`;
+      const priceEl = Array.from(el.querySelectorAll("p")).find(p => /[\d]+(?:[.,]\d{1,2})?/.test(p.textContent));
+      const price = parsePrice(priceEl?.textContent);
+      const imgEl = el.querySelector("img");
 
-    requestAnimationFrame(() => {
-      clone.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
-      clone.style.opacity = "0.6";
+      // Improved unique ID (hash)
+      const pid = btoa(unescape(encodeURIComponent(name + price + idx)));
+
+      el.dataset.kharidoId = pid;
+
+      const btn = document.createElement("button");
+      btn.className = "kharido-add-btn";
+      btn.type = "button";
+      btn.textContent = "Add to Cart";
+      btn.addEventListener("click", () => {
+        addToCart({ id: pid, name, price, img: imgEl?.src || "", imgEl });
+      });
+
+      el.appendChild(btn);
     });
+  };
 
-    setTimeout(() => {
-      clone.remove();
-    }, 800);
-  }
-
-  // Hamburger menu toggle
-  function initHamburger() {
+  const initHamburger = () => {
     const hamburger = document.querySelector(".hamburger");
-    const navMenu = document.getElementById("nav-menu");
+    const navMenu = document.querySelector(".nav-menu");
     if (!hamburger || !navMenu) return;
 
     hamburger.addEventListener("click", () => {
-      const expanded = hamburger.getAttribute("aria-expanded") === "true" || false;
-      hamburger.setAttribute("aria-expanded", !expanded);
-      navMenu.classList.toggle("active");
+      const isExpanded = hamburger.getAttribute("aria-expanded") === "true";
+      hamburger.setAttribute("aria-expanded", String(!isExpanded));
       hamburger.classList.toggle("active");
+      navMenu.classList.toggle("active");
+      document.body.style.overflow = navMenu.classList.contains("active") ? "hidden" : "";
     });
-  }
+  };
 
-  // Optional: Search & Filter feature placeholder
-  function initSearchAndFilter() {
-    const searchInput = document.getElementById("search-input");
-    const categorySelect = document.getElementById("category-filter");
-    const products = document.querySelectorAll(".product");
-
-    function filterProducts() {
-      const searchVal = searchInput?.value.toLowerCase() || "";
-      const categoryVal = categorySelect?.value || "all";
-
-      products.forEach(product => {
-        const name = product.textContent.toLowerCase();
-        const category = product.getAttribute("data-category") || "";
-        const matchesSearch = name.includes(searchVal);
-        const matchesCategory = categoryVal === "all" || category === categoryVal;
-        product.style.display = (matchesSearch && matchesCategory) ? "" : "none";
-      });
-    }
-
-    searchInput?.addEventListener("input", filterProducts);
-    categorySelect?.addEventListener("change", filterProducts);
-  }
-
-  // Initialization
-  function init() {
+  // Initialize the app
+  const init = () => {
     createCartIcon();
     enhanceExistingProducts();
     createCartModal();
     initHamburger();
-    initSearchAndFilter();
-  }
-
-  // Expose some functions globally if needed
-  window.kharidoCart = {
-    addItem: addToCart,
-    loadCart,
-    saveCart,
-    toggleCartModal,
-    renderCartModal,
-    clearCart: () => {
-      localStorage.removeItem(STORAGE_KEY);
-      updateCartCountUI([]);
-      renderCartModal();
-    },
+    updateCartCountUI(loadCart());
   };
 
+  // Public API
+  window.kharidoCart = {
+    addItem: addToCart,
+    getCart: loadCart,
+    updateCart: saveCart,
+    clearCart,
+    toggleCartModal,
+    renderCartModal
+  };
+
+  // Start when DOM is ready
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
