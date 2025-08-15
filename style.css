@@ -20,6 +20,13 @@ body {
   padding: 0 25px;
 }
 
+.header_image {
+  max-width: 100%;  /* Don't go beyond container width */
+  height: auto;     /* Maintain aspect ratio */
+  display: block;   /* Removes extra bottom gap */
+}
+
+
 /* ===== NAVBAR ===== */
 .navbar {
   display: flex;
