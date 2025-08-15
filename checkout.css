@@ -1,0 +1,206 @@
+/* ===== Global Reset ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #0a0a0a;
+  color: #fff;
+  line-height: 1.6;
+}
+
+/* ===== Header/Navbar ===== */
+.header {
+  background: #000;
+  padding: 1rem 2rem;
+  border-bottom: 2px solid #ff00cc;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo h2 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ff00cc;
+  text-shadow: 0 0 10px #ff00cc;
+}
+
+.nav-menu ul {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+}
+
+.nav-menu ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+}
+
+.nav-menu ul li a.active,
+.nav-menu ul li a:hover {
+  color: #ff00cc;
+  text-shadow: 0 0 5px #ff00cc, 0 0 15px #ff00cc;
+}
+
+/* Hamburger Menu (Mobile) */
+.hamburger {
+  background: none;
+  border: none;
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.hamburger-line {
+  width: 25px;
+  height: 3px;
+  background: #fff;
+  margin: 4px 0;
+  transition: 0.3s ease;
+}
+
+/* ===== Checkout Container ===== */
+.checkout-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: rgba(20, 20, 20, 0.95);
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(255, 0, 204, 0.6);
+}
+
+.checkout-title {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #ff00cc;
+  text-shadow: 0 0 10px #ff00cc, 0 0 20px #ff00cc;
+}
+
+/* ===== Form Styling ===== */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #ff00cc;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #ff00cc;
+  border-radius: 5px;
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+  box-shadow: 0 0 10px #ff00cc, 0 0 20px #ff00cc;
+}
+
+/* Button Styling */
+.kharido-btn-primary {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(90deg, #ff00cc, #3333ff);
+  border: none;
+  border-radius: 5px;
+  font-size: 1.1rem;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px #ff00cc, 0 0 20px #3333ff;
+}
+
+.kharido-btn-primary:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px #ff00cc, 0 0 30px #3333ff;
+}
+
+/* ===== Footer ===== */
+.footer {
+  background: #000;
+  padding: 2rem 1rem;
+  margin-top: 3rem;
+  border-top: 2px solid #ff00cc;
+  text-align: center;
+}
+
+.footer h3 {
+  color: #ff00cc;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 0 5px #ff00cc;
+}
+
+.footer p, .footer ul li a {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.footer ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.footer ul li {
+  margin-bottom: 0.5rem;
+}
+
+.footer ul li a:hover {
+  color: #ff00cc;
+  text-shadow: 0 0 5px #ff00cc;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .nav-menu ul {
+    display: none;
+    flex-direction: column;
+    background: #111;
+    position: absolute;
+    top: 70px;
+    right: 0;
+    width: 200px;
+    padding: 1rem;
+    border-left: 2px solid #ff00cc;
+  }
+
+  .nav-menu.active ul {
+    display: flex;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .checkout-container {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+}
